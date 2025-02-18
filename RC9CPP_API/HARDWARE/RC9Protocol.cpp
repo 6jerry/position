@@ -6,10 +6,7 @@
 RC9Protocol::RC9Protocol(UART_HandleTypeDef *huart, bool enableCrcCheck)
     : SerialDevice(huart), state_(WAITING_FOR_HEADER_0), rxIndex_(0), enableCrcCheck_(enableCrcCheck)
 {
-    for (int i = 0; i < MAX_SUBSCRIBERS; i++)
-    {
-        observers_[i] = nullptr;
-    }
+    sendQueue_ = osMessageQueueNew(MAX_QUEUE_SIZE, sizeof(serial_frame_mat_t), NULL);
 }
 
 // 实现接收数据的处理逻辑
@@ -86,9 +83,14 @@ void RC9Protocol::handleReceiveData(uint8_t byte)
                         rx_frame_mat.data.buff_msg[i] = rx_frame_mat.rx_temp_data_mat[i];
                     }
 
-                    // publish(rx_frame_mat.frame_id, rx_frame_mat.data_length, rx_frame_mat.data.buff_msg, rx_frame_mat.data.msg_get); // 发布数据
-                    ppsend_Syn(LOCAL_RCIP, 2, 0, rx_frame_mat.data.buff_msg);
-
+                    // 数据接收成功，调用回调函数
+                    for (int i = 0; i < observerCount_; i++)
+                    {
+                        if (subscribers[i] != nullptr)
+                        {
+                            subscribers[i]->DataReceivedCallback(rx_frame_mat.data.buff_msg, rx_frame_mat.data.msg_get, rx_frame_mat.frame_id, rx_frame_mat.data_length);
+                        }
+                    }
                     state_ = WAITING_FOR_HEADER_0;
                 }
             }
@@ -99,9 +101,14 @@ void RC9Protocol::handleReceiveData(uint8_t byte)
                     rx_frame_mat.data.buff_msg[i] = rx_frame_mat.rx_temp_data_mat[i];
                 }
 
-                // publish(rx_frame_mat.frame_id, rx_frame_mat.data_length, rx_frame_mat.data.buff_msg, rx_frame_mat.data.msg_get);
-                ppsend_Syn(LOCAL_RCIP, 2, 0, rx_frame_mat.data.buff_msg);
-
+                // 数据接收成功，调用回调函数
+                for (int i = 0; i < observerCount_; i++)
+                {
+                    if (subscribers[i] != nullptr)
+                    {
+                        subscribers[i]->DataReceivedCallback(rx_frame_mat.data.buff_msg, rx_frame_mat.data.msg_get, rx_frame_mat.frame_id, rx_frame_mat.data_length);
+                    }
+                }
                 state_ = WAITING_FOR_HEADER_0;
             }
         }
@@ -116,52 +123,45 @@ void RC9Protocol::handleReceiveData(uint8_t byte)
 // 实现获取待发送的数据
 void RC9Protocol::process_data()
 {
-    ppget_Asyn();
-    sendBuffer_[0] = FRAME_HEAD_0_RC9;
-    sendBuffer_[1] = FRAME_HEAD_1_RC9;
-    sendBuffer_[2] = tx_frame_mat.frame_id;
-    sendBuffer_[3] = tx_frame_mat.data_length;
 
-    for (int q = 0; q < tx_frame_mat.data_length; q++)
+    serial_frame_mat_t data_to_send;
+
+    // 尝试从队列中获取一个数据包
+    osStatus_t status = osMessageQueueGet(sendQueue_, &data_to_send, NULL, 0); // 非阻塞
+    if (status == osOK)
     {
-        sendBuffer_[4 + q] = tx_frame_mat.data.buff_msg[q];
-    }
+        // 填充发送缓冲区
+        sendBuffer_[0] = FRAME_HEAD_0_RC9;
+        sendBuffer_[1] = FRAME_HEAD_1_RC9;
+        sendBuffer_[2] = data_to_send.frame_id;
+        sendBuffer_[3] = data_to_send.data_length;
 
-    // 发送时仍然启用 CRC 校验
-    tx_frame_mat.check_code.crc_code = CRC16_Table(tx_frame_mat.data.buff_msg, tx_frame_mat.data_length);
-    sendBuffer_[4 + tx_frame_mat.data_length] = tx_frame_mat.check_code.crc_buff[0];
-    sendBuffer_[5 + tx_frame_mat.data_length] = tx_frame_mat.check_code.crc_buff[1];
-    sendBuffer_[6 + tx_frame_mat.data_length] = FRAME_END_0_RC9;
-    sendBuffer_[7 + tx_frame_mat.data_length] = FRAME_END_1_RC9;
-
-    HAL_UART_Transmit_DMA(huart_, sendBuffer_, tx_frame_mat.data_length + 8);
-}
-
-// 注册观察者函数
-bool RC9Protocol::addsubscriber(RC9Protocol_subscriber *observer)
-{
-    if (observerCount_ < MAX_SUBSCRIBERS)
-    {
-        observers_[observerCount_++] = observer;
-        observer->subtarget = this; // 建立联系
-        return true;
-    }
-    return false; // 注册失败，观察者数量已达到上限
-}
-
-void RC9Protocol::publish(uint8_t data_id, uint8_t datalenth, const uint8_t *data_char, const float *data_float)
-{
-
-    for (int i = 0; i < observerCount_; i++)
-    {
-        if (observers_[i] != nullptr)
+        for (int q = 0; q < data_to_send.data_length; q++)
         {
-            observers_[i]->update(data_id, datalenth, data_char, data_float); // 调用观察者的update方法
+            sendBuffer_[4 + q] = data_to_send.data.buff_msg[q];
         }
+
+        if (enableCrcCheck_)
+        {
+            data_to_send.check_code.crc_code = CRC16_Table(data_to_send.data.buff_msg, data_to_send.data_length);
+        }
+        else
+        {
+            data_to_send.check_code.crc_code = 0x0000;
+        }
+
+        sendBuffer_[4 + data_to_send.data_length] = data_to_send.check_code.crc_buff[0];
+        sendBuffer_[5 + data_to_send.data_length] = data_to_send.check_code.crc_buff[1];
+        sendBuffer_[6 + data_to_send.data_length] = FRAME_END_0_RC9;
+        sendBuffer_[7 + data_to_send.data_length] = FRAME_END_1_RC9;
+
+        // 发送数据
+        HAL_UART_Transmit_DMA(huart_, sendBuffer_, data_to_send.data_length + 8);
     }
+    // 如果队列为空，返回并等待下次处理
 }
 
-void RC9Protocol::load_Txfloat(uint8_t data_id, const float *data_float, uint8_t numbers)
+bool RC9Protocol::load_Txfloat(uint8_t data_id, const float *data_float, uint8_t numbers)
 {
     tx_frame_mat.frame_id = data_id;
     tx_frame_mat.data_length = numbers * 4;
@@ -170,24 +170,68 @@ void RC9Protocol::load_Txfloat(uint8_t data_id, const float *data_float, uint8_t
     {
         tx_frame_mat.data.msg_get[i] = data_float[i];
     }
-}
 
-float RC9Protocol::Get_Rxfloat(uint8_t numbers)
-{
-    return rx_frame_mat.data.msg_get[numbers];
-}
-
-uint8_t RC9Protocol::msgin(uint8_t rcnID_, const void *data)
-{
-    const float *inputData = static_cast<const float *>(data);
-    if (inputData)
+    // 尝试将数据包放入队列中
+    osStatus_t status = osMessageQueuePut(sendQueue_, &tx_frame_mat, 0, 0); // 非阻塞
+    if (status != osOK)
     {
-        tx_frame_mat.data.msg_get[0] = inputData[0];
+        // 队列已满，返回加载失败
+        return false;
     }
-    return 0;
+    else
+    {
+        return true;
+    }
 }
 
-uint8_t RC9Protocol::msgout(uint8_t rcnID_, void *output)
+bool RC9Protocol::load_Txbyte(uint8_t id, const uint8_t *data, uint8_t length)
 {
-    return 0;
+    tx_frame_mat.frame_id = id;
+    tx_frame_mat.data_length = length;
+
+    for (uint8_t i = 0; i < length; i++)
+    {
+        tx_frame_mat.data.buff_msg[i] = data[i];
+    }
+
+    // 尝试将数据包放入队列中
+    osStatus_t status = osMessageQueuePut(sendQueue_, &tx_frame_mat, 0, 0); // 非阻塞
+    if (status != osOK)
+    {
+
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+bool RC9Protocol::addSubscriber(RC9subscriber *subscriber)
+{
+    if (observerCount_ < MAX_SUBSCRIBERS)
+    {
+        subscribers[observerCount_] = subscriber;
+        observerCount_++;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool RC9subscriber::sendFloatData(uint8_t id, const float *data, uint8_t count)
+{
+    return serialport_->load_Txfloat(id, data, count);
+}
+bool RC9subscriber::sendByteData(uint8_t id, const uint8_t *data, uint8_t length)
+{
+    return serialport_->load_Txbyte(id, data, length);
+}
+void RC9subscriber::addport(RC9Protocol *port_)
+{
+    serialport_ = port_;
+
+    serialport_->addSubscriber(this); // 互相传指针
 }

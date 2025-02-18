@@ -4,13 +4,13 @@
 extern "C"
 {
 #endif
-#include "FreeRTOS.h"
+//#include "FreeRTOS.h"
 #include "usart.h"
-#include "task.h"
-#include "queue.h"
-#include <cmsis_os.h>
+//#include "task.h"
+//#include "queue.h"
+//#include <cmsis_os.h>
 #include <stdbool.h>
-#include "crc_util.h"
+//#include "crc_util.h"
 #ifdef __cplusplus
 }
 #endif
