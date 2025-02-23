@@ -45,4 +45,12 @@ position/main.o: ..\Core\Src\main.c ..\Core\Inc\main.h \
   ..\RC9CPP_API\HARDWARE\TaskManager.h \
   ..\RC9CPP_API\HARDWARE\RC9Protocol.h ..\RC9CPP_API\MATH_LIB\crc_util.h \
   ..\RC9CPP_API\HARDWARE\Serial_device.h \
-  G:\Keil_v5\ARM\ARMCLANG\include\stdbool.h
+  G:\Keil_v5\ARM\ARMCLANG\include\stdbool.h \
+  ..\RC9CPP_API\HARDWARE\HWT101CT.h ..\RC9CPP_API\HARDWARE\imu.h \
+  ..\RC9CPP_API\HARDWARE\Oencoder.h \
+  ..\Middlewares\ST\ARM\DSP\Inc\arm_math.h \
+  ..\Drivers\CMSIS\Include\cmsis_compiler.h \
+  G:\Keil_v5\ARM\ARMCLANG\include\string.h \
+  G:\Keil_v5\ARM\ARMCLANG\include\math.h \
+  G:\Keil_v5\ARM\ARMCLANG\include\float.h \
+  G:\Keil_v5\ARM\ARMCLANG\include\limits.h

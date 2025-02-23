@@ -78,9 +78,17 @@ void HWT101CT::handleReceiveData(uint8_t byte)
 
         if (calculated_checksum == frame.checksum)
         {
+            uint32_t current_time = HAL_GetTick();
+            if (previous_time != 0)
+            {
+                delta_time = (float)(current_time - previous_time) / 1000.0f;
+            }
+
             orin_yaw = -calculateYaw(frame.YawH, frame.YawL);
 
             processDecodedData(orin_yaw);
+
+            previous_time = current_time;
         }
 
         rx_state = WAITING_FOR_HEADER_1;
@@ -121,8 +129,13 @@ void HWT101CT::yaw_tf(float nowyaw)
     }
 
     real_yaw = delta_angle;
+    yaw_rad = real_yaw * 0.0174533f;
 }
 float HWT101CT::get_heading()
 {
     return real_yaw;
+}
+float HWT101CT::get_yaw_rad()
+{
+    return yaw_rad;
 }

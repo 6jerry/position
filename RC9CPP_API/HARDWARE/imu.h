@@ -6,11 +6,10 @@ extern "C"
 {
 #endif
 #include "Serial_device.h"
+
 #ifdef __cplusplus
 }
 #endif
-
-
 
 #ifdef __cplusplus
 
@@ -21,6 +20,8 @@ public:
     virtual float get_heading() {};
     virtual float get_acc_x() {};
     virtual float get_acc_y() {};
+
+    virtual float get_yaw_rad() {};
 };
 
 #endif

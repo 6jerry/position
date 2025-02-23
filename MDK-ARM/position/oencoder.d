@@ -1,12 +1,13 @@
-position/position_setup.o: ..\RC9CPP_USER\position\position_setup.cpp \
-  ..\RC9CPP_USER\position\position_setup.h \
-  ..\RC9CPP_API\HARDWARE\TaskManager.h \
+position/oencoder.o: ..\RC9CPP_API\HARDWARE\Oencoder.cpp \
+  ..\RC9CPP_API\HARDWARE\Oencoder.h ..\RC9CPP_API\HARDWARE\TaskManager.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\CMSIS_RTOS_V2\cmsis_os2.h \
   G:\Keil_v5\ARM\ARMCLANG\include\libcxx\stdint.h \
   G:\Keil_v5\ARM\ARMCLANG\include\libcxx\__config \
   G:\Keil_v5\ARM\ARMCLANG\include\stdint.h \
   G:\Keil_v5\ARM\ARMCLANG\include\libcxx\stddef.h \
-  G:\Keil_v5\ARM\ARMCLANG\include\stddef.h ..\Core\Inc\usart.h \
+  G:\Keil_v5\ARM\ARMCLANG\include\stddef.h \
+  ..\RC9CPP_API\HARDWARE\RC9Protocol.h ..\RC9CPP_API\MATH_LIB\crc_util.h \
+  ..\RC9CPP_API\HARDWARE\Serial_device.h ..\Core\Inc\usart.h \
   ..\Core\Inc\main.h ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal.h \
   ..\Core\Inc\stm32f4xx_hal_conf.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_rcc.h \
@@ -35,13 +36,10 @@ position/position_setup.o: ..\RC9CPP_USER\position\position_setup.cpp \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_tim.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_tim_ex.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_uart.h \
-  ..\RC9CPP_API\HARDWARE\RC9Protocol.h ..\RC9CPP_API\MATH_LIB\crc_util.h \
-  ..\RC9CPP_API\HARDWARE\Serial_device.h \
   G:\Keil_v5\ARM\ARMCLANG\include\libcxx\stdbool.h \
   G:\Keil_v5\ARM\ARMCLANG\include\stdbool.h \
   ..\RC9CPP_API\HARDWARE\HWT101CT.h ..\RC9CPP_API\HARDWARE\imu.h \
-  ..\RC9CPP_API\HARDWARE\Oencoder.h ..\Core\Inc\tim.h \
-  ..\Middlewares\ST\ARM\DSP\Inc\arm_math.h \
+  ..\Core\Inc\tim.h ..\Middlewares\ST\ARM\DSP\Inc\arm_math.h \
   ..\Drivers\CMSIS\Include\cmsis_compiler.h \
   G:\Keil_v5\ARM\ARMCLANG\include\libcxx\string.h \
   G:\Keil_v5\ARM\ARMCLANG\include\string.h \

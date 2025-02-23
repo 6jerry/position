@@ -1,21 +1,21 @@
 #include "position_setup.h"
 TaskManager task_core;
-demo test2, test3;
+RC9Protocol to_stm32(&huart6, false);
 
-RC9Protocol esp32_serial(&huart2, false);
+Oencoder encoder_test(&htim1, &htim3);
+HWT101CT imu_101(&huart3);
 
 extern "C" void position_setup()
 {
-    esp32_serial.startUartReceiveIT();
-    task_core.registerTask(0, &test2);
-    task_core.registerTask(1, &test3);
-    task_core.registerTask(5, &esp32_serial);
+    imu_101.startUartReceiveIT();
+    to_stm32.startUartReceiveIT();
+    task_core.registerTask(1, &encoder_test);
+    task_core.registerTask(3, &to_stm32);
 
-    test2.addport(&esp32_serial);
+    encoder_test.init();
+    encoder_test.add_imu(&imu_101);
+    encoder_test.addport(&to_stm32);
 
-    esp32_serial.tx_frame_mat.data_length = 24;
-    esp32_serial.tx_frame_mat.frame_id = 1;
-    task_core.registerTask(8, &esp32_serial);
     osKernelStart();
 }
 

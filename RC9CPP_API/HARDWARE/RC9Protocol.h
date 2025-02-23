@@ -8,7 +8,7 @@ extern "C"
 #include "TaskManager.h"
 #include "Serial_device.h"
 #include "cmsis_os2.h"
-
+#include "HWT101CT.h"
 #ifdef __cplusplus
 }
 #endif
@@ -27,8 +27,7 @@ class RC9Protocol;
 class RC9subscriber
 {
 public:
-   
-    virtual void DataReceivedCallback(const uint8_t *byteData, const float *floatData, uint8_t id, uint16_t byteCount) = 0; // 数据回调函数
+    virtual void DataReceivedCallback(const uint8_t *byteData, const float *floatData, uint8_t id, uint16_t byteCount) {}; // 数据回调函数
     // 用户调用此函数发送浮动数据
     bool sendFloatData(uint8_t id, const float *data, uint8_t count);
 
@@ -38,9 +37,7 @@ public:
     void addport(RC9Protocol *port_);
 
 protected:
-    
 private:
-    
     RC9Protocol *serialport_ = nullptr;
 };
 

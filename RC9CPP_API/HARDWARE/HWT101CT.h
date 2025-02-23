@@ -46,7 +46,7 @@ private:
     HWT101CT_Frame_t frame;
     uint8_t reserved_index;
     uint8_t calculated_checksum, init_count = 0;
-    float orin_yaw = 0.0f, init_yaw = 0.0f,delta_angle = 0.0f,real_yaw=0.0f;
+    float orin_yaw = 0.0f, init_yaw = 0.0f, delta_angle = 0.0f, real_yaw = 0.0f, yaw_rad = 0.0f;
 
     float calculateYaw(uint8_t YawH, uint8_t YawL);
 
@@ -55,8 +55,12 @@ private:
 
     bool if_init = true;
 
+    float delta_time = 0.0f;
+    uint32_t previous_time = 0;
+
 public:
     float get_heading() override;
+    float get_yaw_rad() override;
     void handleReceiveData(uint8_t byte);
     void processDecodedData(float yaw);
     HWT101CT(UART_HandleTypeDef *huart_);
