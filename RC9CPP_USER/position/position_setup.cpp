@@ -1,9 +1,9 @@
 #include "position_setup.h"
 TaskManager task_core;
-RC9Protocol to_stm32(&huart6, false);
+RC9Protocol to_stm32(&huart3, false);
 
 Oencoder encoder_test(&htim1, &htim3);
-HWT101CT imu_101(&huart3);
+HWT101CT imu_101(&huart6);
 
 extern "C" void position_setup()
 {

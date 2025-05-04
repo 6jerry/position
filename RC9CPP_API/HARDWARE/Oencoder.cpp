@@ -14,6 +14,9 @@ void Oencoder::process_data()
     calc_delta_count(&left_wheel);
     calc_delta_count(&right_wheel);
 
+    left_wheel.delta_count = -left_wheel.delta_count;
+    right_wheel.delta_count = -right_wheel.delta_count;
+
     robot_delta_x = (double)left_wheel.delta_count * pos_2_rpm * wheel_p * (-COS45) - (double)right_wheel.delta_count * pos_2_rpm * wheel_p * COS45;
     robot_delta_y = (double)left_wheel.delta_count * pos_2_rpm * wheel_p * COS45 - (double)right_wheel.delta_count * pos_2_rpm * wheel_p * (COS45);
 
@@ -27,8 +30,10 @@ void Oencoder::process_data()
     data_send[0] = (float)world_pos_x;
     data_send[1] = (float)world_pos_y;
     data_send[2] = (float)IMU->get_heading();
+    data_send[3] = ((float)world_delta_x) / delta_time;
+    data_send[4] = ((float)world_delta_y) / delta_time;
 
-    sendFloatData(1, data_send, 3);
+    sendFloatData(1, data_send, 5);
 
     previous_time = current_time;
 }
@@ -69,4 +74,20 @@ void Oencoder::init()
 {
     HAL_TIM_Encoder_Start(left_wheel.ecoder_tim, TIM_CHANNEL_ALL);
     HAL_TIM_Encoder_Start(right_wheel.ecoder_tim, TIM_CHANNEL_ALL);
+}
+
+void Oencoder::DataReceivedCallback(const uint8_t *byteData, const float *floatData, uint8_t id, uint16_t byteCount)
+{
+    if (id == 1)
+    {
+        if (floatData[0] != 0.0f)
+        {
+            world_pos_x = (double)(floatData[0] * 1000.0f);
+        }
+
+        if (floatData[1] != 0.0f)
+        {
+            world_pos_y = (double)(floatData[1] * 1000.0f);
+        }
+    }
 }

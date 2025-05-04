@@ -46,13 +46,14 @@ private:
 
     double world_pos_x = 0.0f, world_pos_y = 0.0f; // mm
 
-    float data_send[3] = {0.0f};
+    float data_send[5] = {0.0f};
 
 public:
     void process_data();
     void add_imu(imu *IMU_);
     Oencoder(TIM_HandleTypeDef *left_encoder_tim, TIM_HandleTypeDef *right_encoder_tim, float wheel_perimeter_ = 119.443f);
     void init();
+    void DataReceivedCallback(const uint8_t *byteData, const float *floatData, uint8_t id, uint16_t byteCount) override;
 };
 
 #endif
